@@ -54,6 +54,25 @@ int main(int argc, char* argv[])
     return 0;
 }
 
+void sub_quit_signal_handle(int sig)
+{
+	int status;
+	int quit_pid = wait(&status);
+
+    if (status)
+    {
+        printf("Child process %d quit, exit status %d\n", quit_pid, status);
+        pid_t pid = fork();
+        if (pid == -1)
+		    printf("new fork error\n");
+        else if (pid == 0)
+            child_crawling();     //有辦法傳參數進去? sub_quit_signal_handle 只接受一 int 參數
+        else
+            process_reborn++;
+    }
+    else
+       process_complete++;
+}
 
 void parent_waiting(int process_total)
 {
