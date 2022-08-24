@@ -84,6 +84,31 @@ void crawler(SSL* ssl, char* host, char* path, char* record_file, char* url_move
     }
 }
 
+void url_convert(char* new_url, char* url)
+{
+    char* ptr = new_url;
+
+    for(int i = 0; i <= strlen(url); i++)
+    {
+        switch (url[i])
+        {
+            case '/':   strcpy(ptr, "∕");
+                        ptr += strlen("∕");
+                        break;
+            case '?':   strcpy(ptr, "？");
+                        ptr += strlen("？");
+                        break;
+            case ':':   strcpy(ptr, "：");
+                        ptr += strlen("：");
+                        break;
+            case '*':   strcpy(ptr, "＊");
+                        ptr += strlen("＊");
+                        break;
+            default:    *ptr++ = url[i];
+        }
+    }
+}
+
 void make_request_message(char* request, char* host, char* path)
 {
     char* original_loc = request;
