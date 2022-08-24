@@ -54,3 +54,23 @@ int main(int argc, char* argv[])
     return 0;
 }
 
+
+void parent_waiting(int process_total)
+{
+	printf("Parent process: %d\n", getpid());
+	signal(SIGCHLD, sub_quit_signal_handle);
+    while (1)
+    {
+        if (process_complete == process_total)
+            break;
+        
+        if (process_reborn > MAX_REBORN_TIMES)
+        {
+            printf("process reborn limit !\n");
+            break;
+        }
+
+        sleep(1);
+    }
+}
+
