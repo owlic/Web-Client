@@ -1,6 +1,28 @@
 #ifndef SPIDER_H
 #define SPIDER_H
 
+#include <stdio.h>
+#include <string.h>
+#include <stdbool.h>
+#include <signal.h>
+#include <unistd.h>
+#include <resolv.h>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <sys/file.h>
+#include <errno.h>
+
+#include <openssl/bio.h>
+#include <openssl/ssl.h>
+#include <openssl/err.h>
+#include <openssl/pem.h>
+#include <openssl/x509.h>
+#include <openssl/x509_vfy.h>
 #define SUCCESS 0
 #define BASE 0
 #define ERR_ARGC (BASE - 1)
@@ -29,6 +51,35 @@
 
 #define LIST_NAME "url_list.txt"
 #define DEBUG_
+
+typedef struct ssl_info
+{
+    SSL* ssl;
+    SSL_CTX* ctx;
+    int server;
+}ssl_info;
+
+int ssl_connect(char*, ssl_info*, char*);
+void ssl_disconnect(ssl_info*, char*);
+int create_socket(char*, char*);
+void print_ip(struct hostent*);
+void get_host_n_path(char*, char*, int, char*, int);
+void crawler(SSL*, char*, char*, char*, char*, int, char*, int*);
+void make_request_message(char*, char*, char*);
+void make_file_name(char*, char*, char*);
+int SSL_read_n_write(SSL*, char*, char*, int*);
+void general_case(SSL*, char*, FILE*, int, char*, int*);
+void url_convert(char*, char*);
+void sub_quit_signal_handle(int);
+void parent_waiting(int);
+void child_crawling();
+bool is_target(char*, int);
+int check_EOL(char*, int size, char* link);
+
+int process_complete = 0;
+int process_reborn = 0;
+char folder[FOLDER_NAME_SIZE];
+char padding[] = {'\n', ' ', ' ', ' '};
 
 
 #endif
