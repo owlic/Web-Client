@@ -99,3 +99,18 @@ void make_request_message(char* request, char* host, char* path)
     printf("----------\nRequest:\n----------\n%s\n", original_loc);
 }
 
+void make_file_name(char* url_file, char* host, char* path)
+{
+    char host_convert[MAX_NAME_SIZE];
+    url_convert(host_convert, host);
+
+    if (path[0])
+    {
+        char path_convert[MAX_NAME_SIZE];
+        url_convert(path_convert, path);
+        sprintf(url_file, "%s%s∕%s%s", folder, host_convert, path_convert, ".txt");
+    }
+    else
+        sprintf(url_file, "%s%s%s", folder, host_convert, ".txt");
+}
+
