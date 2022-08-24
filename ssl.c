@@ -121,6 +121,13 @@ int ssl_connect(char* url, ssl_info* SI, char* host)
     return SUCCESS;
 }
 
+void ssl_disconnect(ssl_info* SI, char* url)
+{
+    SSL_free(SI->ssl);
+    close(SI->server);
+    SSL_CTX_free(SI->ctx);
+    printf("Finished SSL/TLS connection with server: %s\n", url);
+}
 
 /* ---------------------------------------------------------- *
  * create_socket() creates the socket & TCP-connect to server *
