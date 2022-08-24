@@ -204,4 +204,24 @@ int create_socket(char* url, char* host_url)
     return sockfd;
 }
 
+void print_ip(struct hostent *he)
+{
+    struct in_addr a;
+    char **addr_list;
+    char **aliases;
+    if (he)
+    {
+        printf("name: %s\n", he->h_name);
+        aliases = he->h_aliases;
+        while (*aliases)
+            printf("alias: %s\n", *aliases++);
+
+        addr_list = he->h_addr_list;
+        while (*addr_list)
+        {
+            bcopy(*addr_list++, (char *) &a, sizeof(a));
+            printf("address: %s\n", inet_ntoa(a));
+        }
+    }
+}
 
