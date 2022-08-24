@@ -202,6 +202,31 @@ void get_host_n_path(char* url, char* host, int host_size, char* path, int path_
         *ptr = '\0';
 }
 
+bool is_target(char* url, int url_len)
+{
+    char original_char = *(url + url_len + 1);
+    *(url + url_len + 1) = '\0';
+
+    bool qualified = true;
+
+    char* type[] = {".png", ".jpg", ".gif", ".css", "css?", 
+                    ".js?", ".pdf", ".woff", ".ico",
+                    "google.com.tw/maps", "#", " "};
+    int type_count = sizeof(type) / sizeof(char*);
+
+    for (int i = 0; i < type_count; i++)
+    {
+        if (strstr(url, type[i]))
+        {
+            qualified = false;
+            break;
+        }
+    }
+    
+    *(url + url_len + 1) = original_char;
+    return qualified;
+}
+
 int check_EOL(char* search_ptr, int size, char* link)
 {
     int i = 0;
