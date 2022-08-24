@@ -84,3 +84,18 @@ void crawler(SSL* ssl, char* host, char* path, char* record_file, char* url_move
     }
 }
 
+void make_request_message(char* request, char* host, char* path)
+{
+    char* original_loc = request;
+
+    strncpy(request, "GET /", 6);
+    if (path[0])
+        strncat(request, path, strlen(path) + 1);
+
+    strcat(request, " HTTP/1.1\r\nHost: ");
+    strncat(request, host, strlen(host));
+    strcat(request, "\r\n\r\n");
+
+    printf("----------\nRequest:\n----------\n%s\n", original_loc);
+}
+
