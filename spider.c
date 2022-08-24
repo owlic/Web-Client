@@ -202,6 +202,54 @@ void get_host_n_path(char* url, char* host, int host_size, char* path, int path_
         *ptr = '\0';
 }
 
+int check_EOL(char* search_ptr, int size, char* link)
+{
+    int i = 0;
+    int link_size = 0;
+
+    for (; i < size; i++)
+    {
+        if (search_ptr[i] == '\r')
+            break;
+        link[link_size++] = search_ptr[i];
+    }
+
+    if (i == size)
+        return size;
+
+#ifdef DEBUG
+    printf("search_str: ");
+    for (int k = 0; k < size; k++)
+        printf("%c", search_ptr[k]);
+    printf("\n");
+#endif
+
+    for (; i < size; i++)
+    {
+        if (search_ptr[i] == '\n')
+            break;
+    }
+
+    i++;
+    printf("--------------------\nlink[i]: %d\n", link[i]);
+
+    for (; i < size; i++)
+    {
+        if (search_ptr[i] == '\n')   //cause google map
+            return 0;
+        link[link_size++] = search_ptr[i];
+    }
+    
+#ifdef DEBUG
+    printf("--------------------\nlink_size: %d\n", link_size);
+    printf("--------------------\nlink: \n");
+    for (int j = 0; j < link_size; j++)
+        printf("%c", link[j]);
+#endif
+
+    return link_size;
+}
+
 void search_link(char* content, int* content_size, char* link_buf, int* link_buf_size)
 {
     char host[MAX_URL_SIZE];
