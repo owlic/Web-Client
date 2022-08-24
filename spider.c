@@ -172,3 +172,33 @@ void general_case(SSL* ssl, char* response, FILE* fptr, int server, char* conten
         }
     }
 }
+
+
+void get_host_n_path(char* url, char* host, int host_size, char* path, int path_size)
+{
+    memset(host, 0, host_size);
+    memset(path, 0, path_size);
+
+    char* ptr;
+    ptr = strstr(url, "//");
+    if (ptr)
+        ptr += 2;
+    else
+        ptr = url;
+
+    strncpy(host, ptr, host_size - 1);    //如果 src 字元數比 count 少，會把剩下未滿 count 的部分通通補上 '\0'
+    host[host_size - 1] = '\0';
+
+    ptr = strchr(host, '/');
+    if (ptr)
+    {
+        strncpy(path, ptr + 1, path_size - 1);
+        path[path_size - 1] = '\0';
+        *ptr = '\0';
+    }
+
+    ptr = strchr(host, ':');
+    if (ptr)
+        *ptr = '\0';
+}
+
