@@ -202,3 +202,91 @@ void get_host_n_path(char* url, char* host, int host_size, char* path, int path_
         *ptr = '\0';
 }
 
+void search_link(char* content, int* content_size, char* link_buf, int* link_buf_size)
+{
+    char host[MAX_URL_SIZE];
+    char path[MAX_URL_SIZE];
+    char link_file[MAX_NAME_SIZE];
+    char* store_ptr = link_buf;                             //用來儲存
+    char* search_ptr = strstr(content, "href=\"http");      //用來查詢
+    char* link_end;
+    int size;
+    int link_size;
+    
+#ifdef DEBUG
+    printf("store_ptr (start): %p\n", store_ptr);
+#endif
+
+    while(search_ptr)
+    {
+        search_ptr += 6;
+        link_end = strchr(search_ptr, '\"');
+        if (link_end == NULL)
+            break;
+        
+        size = link_end - search_ptr;
+
+        char link[size + 1];
+        link_size = check_EOL(search_ptr, size, link);
+        link[link_size] = '\0';
+        //為了在加入連結時就檢查是否有重覆，這裡就需使用 strstr()
+        //因此特地讓 link 最後補上 \0，但不會複製到 link_buf
+
+        if (link_size > 100)
+            printf("-------------------- WARNING !!! --------------------\n"
+            "%s\n-------------------- WARNING !!! --------------------\n", link);
+
+        if (link_size && is_target(link, link_size))
+        {
+            if (strstr(link_buf, link) == NULL)
+            {
+                strncpy(store_ptr, link, link_size);
+                store_ptr += link_size;
+                *store_ptr++ = '\n';
+            }
+        }
+
+        search_ptr = strstr(search_ptr, "href=\"http");
+    }
+
+    search_ptr = strstr(content, "'http");
+
+    while(search_ptr)
+    {
+        search_ptr += 1;
+        link_end = strchr(search_ptr, '\'');
+        if (link_end == NULL)
+            break;
+        
+        if (strncmp(link_end - 5, ".html", 5) == 0)
+        {
+            size = link_end - search_ptr;
+
+            char link[size + 1];
+            link_size = check_EOL(search_ptr, size, link);
+            link[link_size] = '\0';
+
+            if (link_size && is_target(search_ptr, link_size))
+            {
+                if (strstr(link_buf, link) == NULL)
+                {
+                    strncpy(store_ptr, link, link_size);
+                    store_ptr += link_size;
+                    *store_ptr++ = '\n';
+                }
+            }
+        }
+
+        search_ptr = strstr(search_ptr, "'http");
+    }
+
+    *link_buf_size = store_ptr - link_buf;
+
+    *store_ptr++ = '\0';
+
+#ifdef DEBUG
+    printf("store_ptr (end): %p\n", store_ptr);
+#endif
+
+}
+
