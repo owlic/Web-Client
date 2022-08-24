@@ -9,10 +9,6 @@
 
 int ssl_connect(char* url, ssl_info* SI, char* host)
 {
-    //同網域的話 ssl 連線只須建立一次
-    //再抓網址時若是 http 需判斷 是否同網域
-    //將 host_name 變成全域變數，讓程式可以更簡化
-
     if (!SI)
         return ERR_SSL_INFO;
 
@@ -78,7 +74,7 @@ int ssl_connect(char* url, ssl_info* SI, char* host)
     SI->server = create_socket(url, host);
     if (SI->server == -1)
         return ERR_SSL_CONNCET;
-    else if (SI->server)
+    if (SI->server)
         printf("Successfully made the TCP connection to: %s\n", url);
 
   /* ---------------------------------------------------------- *
@@ -115,9 +111,8 @@ int ssl_connect(char* url, ssl_info* SI, char* host)
         return ERR_SSL_CONNCET;
     }
     else
-#ifdef DEBUG
         printf("Successfully enabled SSL/TLS session to: %s\n", url);
-#endif
+
     return SUCCESS;
 }
 
@@ -178,7 +173,7 @@ int create_socket(char* url, char* host_url)
     if ((host = gethostbyname(host_url)) == NULL)
     {
         printf("Error: Cannot resolve host_url %s.\n",  host_url);
-        abort();
+        exit(1);
     }
 
   /* ---------------------------------------------------------- *
@@ -190,6 +185,9 @@ int create_socket(char* url, char* host_url)
    * create the basic TCP socket                                *
    * ---------------------------------------------------------- */
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    printf("---------------\nsockfd: %d\n---------------\n", sockfd);
+    if (sockfd == -1)
+        return -1;
 
     dest_addr.sin_family = AF_INET;
     dest_addr.sin_port = htons(port);
@@ -206,7 +204,11 @@ int create_socket(char* url, char* host_url)
    * Try to make the host connect here                          *
    * ---------------------------------------------------------- */
     if (connect(sockfd, (struct sockaddr *) &dest_addr, sizeof(struct sockaddr)) == -1)
-        printf("Error: Cannot connect to host %s [%s] on port %d.\n", host_url, tmp_ptr, port);
+    {
+        printf("Error: Cannot connect to host %s [%s] on port %d.\n"
+            "%s\n", host_url, tmp_ptr, port, strerror(errno));      //http 的情況
+        return -1;
+    }
 
     return sockfd;
 }
