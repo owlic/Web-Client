@@ -139,3 +139,36 @@ void make_file_name(char* url_file, char* host, char* path)
         sprintf(url_file, "%s%s%s", folder, host_convert, ".txt");
 }
 
+
+void general_case(SSL* ssl, char* response, FILE* fptr, int server, char* content, int* content_size)
+{
+    char* transfer_mode = NULL;
+    if (transfer_mode = strstr(response, "Transfer-Encoding: chunked"))
+    {
+        char* ending = NULL;
+        while((ending = strstr(response, "0\r\n\r\n")) == NULL)     //不能完全判斷
+            SSL_read_n_write(ssl, response, content, content_size);
+    }
+    else if ((transfer_mode = strstr(response, "Content-Length: ")) ||
+             (transfer_mode = strstr(response, "content-length: ")))
+    {
+        char* size_loc = transfer_mode + 16;
+        int content_length = atoi(size_loc);
+
+        char* HTTP_body = strchr(size_loc, '\n');
+        content_length -= *content_size - (HTTP_body - response);
+        while (content_length > 0)
+            content_length -= SSL_read_n_write(ssl, response, content, content_size);
+    }
+    else
+    {
+        while (1)
+        {
+            struct timeval timeout;
+            timeout.tv_sec = 3;
+            timeout.tv_usec = 0;
+            setsockopt(server, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));     //設置超時時間
+            SSL_read_n_write(ssl, response, content, content_size);
+        }
+    }
+}
