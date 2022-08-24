@@ -93,6 +93,17 @@ void parent_waiting(int process_total)
     }
 }
 
+void connect_fail_handle(char* list_file, int seek_loc)
+{
+    FILE* fptr = fopen(list_file, "r+");
+    if (!fptr)
+        printf("---------------\nfopen error !\n---------------\n");
+
+    fseek(fptr, seek_loc, SEEK_SET);
+    fprintf(fptr, "%c", STATUS_FAIL);
+    fclose(fptr);
+}
+
 void child_crawling()
 {
     usleep(10000);      //防止 child 先跑
