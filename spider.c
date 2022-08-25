@@ -109,6 +109,16 @@ void url_convert(char* new_url, char* url)
     }
 }
 
+int SSL_read_n_write(SSL* ssl, char* response, char* content, int* content_size)
+{
+    int ret = SSL_read(ssl, response, RESPONSE_SIZE);
+    if(ret <= 0)
+        SSL_get_error(ssl, ret);    //不能用 strerror(errno) 來查看，會出現 SUCCESS
+    memmove(content + *content_size, response, ret);
+    *content_size += ret;
+    return ret;
+}
+
 void make_request_message(char* request, char* host, char* path)
 {
     char* original_loc = request;
