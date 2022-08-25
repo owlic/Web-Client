@@ -19,7 +19,6 @@ int main(int argc, char* argv[])
         return ERR_PROCESS_NUMBER;
 
     strncpy(folder, argv[2], FOLDER_NAME_SIZE);
-
     if (folder[strlen(folder) - 1] != '/')
         folder[strlen(folder)] = '/';
 
@@ -150,10 +149,10 @@ void child_crawling()
         if (fread(list_buf, fsize, 1, fptr) != 1)
             printf("---------------\nfread error !\n---------------\n");
 
-        char* url_loc = strstr(list_buf, "\n   http");
+        char* url_loc = strstr(list_buf, padding);
         if (url_loc)
         {
-            int seek_loc = url_loc - list_buf + sizeof(char);
+            int seek_loc = url_loc - list_buf;
 #ifdef DEBUG
             printf("---------------\nseek_loc: %d\n", seek_loc);
 #endif
@@ -311,8 +310,9 @@ void child_crawling()
                     char* repeat_link = strstr(list_buf, link);
                     if (repeat_link == NULL)
                     {
+                        link[link_size] = '\n';
                         fwrite(padding, sizeof(padding), 1, fptr);
-                        fwrite(link, link_size, 1, fptr);
+                        fwrite(link, link_size + 1, 1, fptr);
                     }
                     curr_ptr = link_end + 1;
                 }
@@ -331,7 +331,7 @@ void child_crawling()
             flock(fileno(fptr), LOCK_UN);
             fclose(fptr);
 
-            url_loc = strstr(list_buf, "\n~  http");
+            url_loc = strstr(list_buf, "~\t");
             free(list_buf);
 
             if (url_loc)

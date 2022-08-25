@@ -40,9 +40,11 @@
 #define MAX_NAME_SIZE 128
 #define FOLDER_NAME_SIZE 96
 #define MAX_CONTENT_SIZE (1 << 20)
+#define MAX_RECORD_SIZE (1 << 25)
 #define REQUEST_SIZE (1 << 10)      //記得括弧
 #define RESPONSE_SIZE (1 << 14)     //16Kb
 #define BUF_SIZE (1 << 18)
+#define PID_MAX_LIMIT (1 << 23)
 #define MAX_REBORN_TIMES 3
 
 #define STATUS_FINISH '*'
@@ -75,12 +77,13 @@ void parent_waiting(int);
 void child_crawling();
 bool is_target(char*, int);
 int check_EOL(char*, int size, char* link);
+int count_digit(long long);
+void make_padding(long long);
 
 int process_complete = 0;
 int process_reborn = 0;
 char folder[FOLDER_NAME_SIZE];
-char padding[] = {'\n', ' ', ' ', ' '};
-
+char padding[] = {' ', '\t'};
 
 #endif
 
