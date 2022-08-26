@@ -80,6 +80,8 @@ bool is_target(char*, int);
 int check_EOL(char*, int size, char* link);
 int count_digit(long long);
 void make_padding_EOL(long long);
+void search_link(char*, int*, char*, int*);
+void search_link_extend(char*, int*, char*, int*, char*);
 
 int process_complete = 0;
 int process_reborn = 0;

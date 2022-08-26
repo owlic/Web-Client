@@ -283,11 +283,6 @@ int check_EOL(char* search_ptr, int size, char* link)
     return link_size;
 }
 
-void parse_link()
-{
-    
-}
-
 void search_link(char* content, int* content_size, char* link_buf, int* link_buf_size)
 {
     char host[MAX_URL_SIZE];
@@ -375,4 +370,127 @@ void search_link(char* content, int* content_size, char* link_buf, int* link_buf
 #endif
 
 }
+
+void search_link_extend(char* content, int* content_size, char* link_buf, int* link_buf_size, char* url)
+{
+    char* store_ptr = link_buf;
+#ifdef DEBUG
+    printf("store_ptr (start): %p\n", store_ptr);
+#endif
+
+    char* link_end;
+    int size;
+    int link_size;
+
+    char* keyword[] = {"href=", "window.open(", "window.location = "};
+    int keyword_count = sizeof(keyword) / sizeof(char*);
+
+    for (int i = 0; i < keyword_count; i++)
+    {
+        char* search_ptr = strstr(content, keyword[i]);
+
+        while(search_ptr)
+        {
+
+#ifdef DEBUG
+            printf("--------------------\nsearch_ptr: %p\n--------------------\n", search_ptr);
+#endif
+
+            search_ptr += strlen(keyword[i]);
+            bool path = false;
+
+            //while(*search_ptr++ == ' ');
+
+            if (*search_ptr == '\"')
+            {
+                search_ptr += 1;
+                link_end = strchr(search_ptr, '\"');
+            }
+            else if (*search_ptr == '\'')
+            {
+                search_ptr += 1;
+                link_end = strchr(search_ptr, '\'');
+            }
+            else
+            {
+                if (*search_ptr == '\\')
+                {
+                    if (*(search_ptr + 1) == '\"' || *(search_ptr + 1) == '\'')
+                    {
+                        search_ptr += 2;
+                        link_end = strchr(search_ptr, '\\');
+                    }
+                }
+                else if (*search_ptr == '/')
+                {
+                    search_ptr += 1;
+                    path = true;
+                }
+
+                char* candidate1 = strchr(search_ptr, ' ');
+                char* candidate2 = strchr(search_ptr, '>');
+
+                link_end = (candidate1 < candidate2) ? candidate1 : candidate2;
+            }
+
+            if (strncmp(search_ptr, "javascript", strlen("javascript")) == 0 ||
+                *search_ptr == '#')
+            {
+                search_ptr++;
+                continue;
+            }
+
+            if (link_end == NULL)
+                break;
+
+
+            size = link_end - search_ptr;
+            if (path)
+                size += strlen(url);
+            
+            char link[size + 1];
+            
+            if (path)
+            {
+                strncpy(link, url, strlen(url));
+                link_size = check_EOL(search_ptr, size, link + strlen(url));
+                link_size += strlen(url);
+            }
+            else
+                link_size = check_EOL(search_ptr, size, link);
+        
+            link[link_size] = '\0';
+
+#ifdef DEBUG
+            if (link_size > 100)
+                printf("-------------------- WARNING !!! --------------------\n");
+#endif
+
+            printf("--------------------\nlink: %s\n--------------------\n", link);
+
+
+            if (link_size && is_target(link, link_size))
+            {
+                if (strstr(link_buf, link) == NULL)
+                {
+                    strncpy(store_ptr, link, link_size);
+                    store_ptr += link_size;
+                    *store_ptr++ = '\n';
+                }
+            }
+
+            search_ptr = strstr(search_ptr, keyword[i]);
+        }
+    }
+
+    *link_buf_size = store_ptr - link_buf;
+
+    *store_ptr++ = '\0';
+
+#ifdef DEBUG
+    printf("store_ptr (end): %p\n", store_ptr);
+#endif
+
+}
+
 
