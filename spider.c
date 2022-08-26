@@ -149,7 +149,6 @@ void make_file_name(char* url_file, char* host, char* path)
         sprintf(url_file, "%s%s%s", folder, host_convert, ".txt");
 }
 
-
 void general_case(SSL* ssl, char* response, FILE* fptr, int server, char* content, int* content_size)
 {
     char* transfer_mode = NULL;
@@ -182,7 +181,6 @@ void general_case(SSL* ssl, char* response, FILE* fptr, int server, char* conten
         }
     }
 }
-
 
 void get_host_n_path(char* url, char* host, int host_size, char* path, int path_size)
 {
@@ -283,6 +281,11 @@ int check_EOL(char* search_ptr, int size, char* link)
 #endif
 
     return link_size;
+}
+
+void parse_link()
+{
+    
 }
 
 void search_link(char* content, int* content_size, char* link_buf, int* link_buf_size)

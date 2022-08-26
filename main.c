@@ -21,18 +21,25 @@ int main(int argc, char* argv[])
     strncpy(folder, argv[2], FOLDER_NAME_SIZE);
     if (folder[strlen(folder) - 1] != '/')
         folder[strlen(folder)] = '/';
+    
+    make_padding_EOL(PID_MAX_LIMIT);
+    printf("padding_EOL size: %d\n", padding_EOL[0]);
 
     if (mkdir(argv[2], S_IRWXU | S_IRWXG | S_IRWXO))
         printf("%s\n", strerror(errno));
 
     char list_file[MAX_NAME_SIZE];
+
     sprintf(list_file, "%s%s", folder, LIST_NAME);
     FILE* fptr = fopen(list_file, "w+");
     if (!fptr)
         return ERR_OPEN_FAIL;
     printf("URL: %s\n", argv[1]);
-    
-    fprintf(fptr, "%s%s\n", padding, argv[1]);
+
+    fwrite(padding_SOL, sizeof(padding_SOL), 1, fptr);
+    fwrite(argv[1], strlen(argv[1]), 1, fptr);
+    fwrite(padding_EOL + 1, (int)padding_EOL[0], 1, fptr);
+
     fclose(fptr);
 
     pid_t pid;
@@ -105,14 +112,14 @@ void connect_fail_handle(char* list_file, int seek_loc)
 
 void child_crawling()
 {
-    usleep(10000);      //防止 child 先跑
+    sleep(1);      //防止 child 先跑
 	printf("create sub process id: %d, parent id: %d\n", getpid(), getppid());
 
     char list_file[MAX_NAME_SIZE];
     sprintf(list_file, "%s%s", folder, LIST_NAME);
 
     char record_file[MAX_NAME_SIZE];
-    sprintf(record_file, "%sPID-%d%s", folder, getpid(), ".txt");
+    sprintf(record_file, "%s%s%d%s", folder, FNAME_TAG, getpid(), ".txt");
 
     int attempt = 0;
 
@@ -149,8 +156,10 @@ void child_crawling()
         if (fread(list_buf, fsize, 1, fptr) != 1)
             printf("---------------\nfread error !\n---------------\n");
 
-        char* url_loc = strstr(list_buf, padding);
-        if (url_loc)
+        char* url_loc = strstr(list_buf, padding_SOL);
+        char* file_loc = strchr(url_loc + sizeof(padding_SOL), '\t');
+
+        if (url_loc && file_loc)
         {
             int seek_loc = url_loc - list_buf;
 #ifdef DEBUG
@@ -158,20 +167,23 @@ void child_crawling()
 #endif
             fseek(fptr, seek_loc, SEEK_SET);
             fprintf(fptr, "%c", STATUS_CRAWLING);
+            fseek(fptr, file_loc - url_loc, SEEK_CUR);
+
+            fprintf(fptr, "%s%d", FNAME_TAG, getpid());
+
             flock(fileno(fptr), LOCK_UN);
             printf("---------------\nLOCK_UN OK\n");
             fclose(fptr);
 
             //將 url_list 中的網址取出
 
-            url_loc += sizeof(padding);
-            char* url_end = strchr(url_loc, '\n');
+            url_loc += sizeof(padding_SOL);
+            char* url_end = strchr(url_loc, '\t');
             if (url_end == NULL)
             {
                 printf("---------------\nURL capture error !\n");
                 exit(1);
             }
-
 
             printf("---------------\nurl_end: %p\n", url_end);
             int url_size = url_end - url_loc;
@@ -191,9 +203,9 @@ void child_crawling()
             printf("----------\nhost: %s\n", host);
             printf("----------\npath: %s\n", path);
 
-            ssl_info* SI;
+            ssl_info SI;
 
-            if (ssl_connect(url, SI, host) == ERR_SSL_CONNCET)
+            if (ssl_connect(url, &SI, host) == ERR_SSL_CONNCET)
             {
                 connect_fail_handle(list_file, seek_loc);
                 continue;
@@ -204,22 +216,22 @@ void child_crawling()
             char* content = malloc(MAX_CONTENT_SIZE);
             int content_size = 0;
             
-            crawler(SI->ssl, host, path, record_file, url_move, 
-                                 SI->server, content, &content_size);
+            crawler(SI.ssl, host, path, record_file, url_move, 
+                    SI.server, content, &content_size);
             if (url_move[0])
             {
-                ssl_disconnect(SI, url);
+                ssl_disconnect(&SI, url);
                 get_host_n_path(url_move, host, MAX_URL_SIZE, path, MAX_URL_SIZE);
 #ifdef DEBUG
                 printf("----------\nNEW host: %s\n", host);
                 printf("----------\nNEW path: %s\n", path);
 #endif
-                if (ssl_connect(url, SI, host) == ERR_SSL_CONNCET)
+                if (ssl_connect(url, &SI, host) == ERR_SSL_CONNCET)
                 {
                     connect_fail_handle(list_file, seek_loc);
                     continue;
                 }
-                crawler(SI->ssl, host, path, record_file, url_move, SI->server, content, &content_size);
+                crawler(SI.ssl, host, path, record_file, url_move, SI.server, content, &content_size);
             }
 
             char* link_buf = calloc(BUF_SIZE, sizeof(char));
@@ -310,9 +322,9 @@ void child_crawling()
                     char* repeat_link = strstr(list_buf, link);
                     if (repeat_link == NULL)
                     {
-                        link[link_size] = '\n';
-                        fwrite(padding, sizeof(padding), 1, fptr);
-                        fwrite(link, link_size + 1, 1, fptr);
+                        fwrite(padding_SOL, sizeof(padding_SOL), 1, fptr);
+                        fwrite(link, link_size, 1, fptr);
+                        fwrite(padding_EOL + 1, (int)*padding_EOL, 1, fptr);
                     }
                     curr_ptr = link_end + 1;
                 }
@@ -322,9 +334,9 @@ void child_crawling()
             fclose(fptr);
 
             if (url_move[0])
-                ssl_disconnect(SI, url_move);
+                ssl_disconnect(&SI, url_move);
             else
-                ssl_disconnect(SI, url);
+                ssl_disconnect(&SI, url);
         }
         else
         {
@@ -344,5 +356,22 @@ void child_crawling()
         }
     }
     exit(1);
+}
+
+void make_padding_EOL(long long num)
+{
+    int length = 0;
+    while (num)
+    {
+        length++;
+        num /= 10;
+    }
+    length += strlen(FNAME_TAG);
+    padding_EOL = malloc((length + 5) * sizeof(char));
+    memset(padding_EOL, ' ', length + 5);
+    padding_EOL[0] = (char)(length + 3);
+    padding_EOL[1] = '\t';
+    padding_EOL[length + 3] = '\n';
+    padding_EOL[length + 4] = '\0';
 }
 

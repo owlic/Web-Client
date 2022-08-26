@@ -52,6 +52,7 @@
 #define STATUS_FAIL '!'
 
 #define LIST_NAME "url_list.txt"
+#define FNAME_TAG "PID-"
 #define DEBUG_
 
 typedef struct ssl_info
@@ -78,12 +79,13 @@ void child_crawling();
 bool is_target(char*, int);
 int check_EOL(char*, int size, char* link);
 int count_digit(long long);
-void make_padding(long long);
+void make_padding_EOL(long long);
 
 int process_complete = 0;
 int process_reborn = 0;
 char folder[FOLDER_NAME_SIZE];
-char padding[] = {' ', '\t'};
+char padding_SOL[] = {' ', '\t'};
+char* padding_EOL;
 
 #endif
 
